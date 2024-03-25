@@ -8,6 +8,15 @@ const Aquecimento = () => {
   const [pausado, setPausado] = useState(false);
   const [processo, setProcesso] = useState("");
   const [programa, setPrograma] = useState(null);
+  const [programasCustomizados, setProgramasCustomizados] = useState([]);
+  const [novoPrograma, setNovoPrograma] = useState({
+    nome: "",
+    alimento: "",
+    potencia: 0,
+    caractereAquecimento: "",
+    tempo: 0,
+    instrucoes: "",
+  });
 
   useEffect(() => {
     if (aquecendo) {
@@ -30,26 +39,60 @@ const Aquecimento = () => {
     }
   }, [tempo]);
 
-  const iniciarAquecimento = () => {
-    if (programa) {
-      setTempo(programa.tempo);
-      setPotencia(programa.potencia);
-      setAquecendo(true);
-      setPausado(false);
-      setProcesso("");
-    } else {
-      if (tempo < 1 || tempo > 120) {
-        alert("Informe um tempo válido (entre 1 e 120 segundos)");
-        return;
-      }
-      if (potencia < 1 || potencia > 10) {
-        alert("Informe uma potência válida (entre 1 e 10)");
-        return;
-      }
-      setAquecendo(true);
-      setPausado(false);
-      setProcesso("");
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNovoPrograma((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+  const adicionarProgramaCustomizado = () => {
+    const novoProgramaValidado = { ...novoPrograma };
+    // Validar os campos aqui antes de adicionar o programa
+    if (
+      !novoProgramaValidado.nome ||
+      !novoProgramaValidado.alimento ||
+      !novoProgramaValidado.potencia ||
+      !novoProgramaValidado.caractereAquecimento ||
+      !novoProgramaValidado.tempo
+    ) {
+      alert("Por favor, preencha todos os campos obrigatórios.");
+      return;
     }
+
+    // Verificar se o caractere de aquecimento não se repete com o caractere padrão "."
+    if (
+      novoProgramaValidado.caractereAquecimento === "." ||
+      novoProgramaValidado.caractereAquecimento === "..."
+    ) {
+      alert("O caractere de aquecimento não pode ser '.' ou '...'");
+      return;
+    }
+
+    // Aqui você pode adicionar a lógica para validar se o caractere de aquecimento já está em uso
+
+    // Adicionar o novo programa customizado à lista de programas customizados
+    setProgramasCustomizados([...programasCustomizados, novoProgramaValidado]);
+
+    // Limpar os campos após adicionar o programa
+    setNovoPrograma({
+      nome: "",
+      alimento: "",
+      potencia: 0,
+      caractereAquecimento: "",
+      tempo: 0,
+      instrucoes: "",
+    });
+  };
+
+  const iniciarAquecimento = () => {
+    const programaSelecionado = programa || programasPreDefinidos[0];
+    setTempo(programaSelecionado.tempo);
+    setPotencia(programaSelecionado.potencia);
+    setAquecendo(true);
+    setPausado(false);
+    setProcesso("");
   };
 
   const pausarOuCancelar = () => {
@@ -83,11 +126,28 @@ const Aquecimento = () => {
     <div>
       <label>Programa</label>
       <select
-        onChange={(e) => setPrograma(programasPreDefinidos[e.target.value])}
+        onChange={(e) =>
+          setPrograma(
+            programasPreDefinidos[e.target.value] ||
+              programasCustomizados[
+                e.target.value - programasPreDefinidos.length
+              ]
+          )
+        }
       >
         <option value="">Selecione um programa</option>
         {programasPreDefinidos.map((programa, index) => (
-          <option value={index}>{programa.nome}</option>
+          <option key={index} value={index}>
+            {programa.nome}
+          </option>
+        ))}
+        {programasCustomizados.map((programa, index) => (
+          <option
+            key={index + programasPreDefinidos.length}
+            value={index + programasPreDefinidos.length}
+          >
+            <i>{programa.nome}</i>
+          </option>
         ))}
       </select>
 
@@ -113,6 +173,61 @@ const Aquecimento = () => {
 
       <p>Tempo restante: {exibirTempo()}</p>
       <p>{processo}</p>
+
+      {/* Formulário para cadastrar programa customizado */}
+      <div>
+        <h2>Cadastrar Novo Programa de Aquecimento</h2>
+        <label>Nome:</label>
+        <input
+          type="text"
+          name="nome"
+          value={novoPrograma.nome}
+          onChange={handleInputChange}
+        />
+
+        <label>Alimento:</label>
+        <input
+          type="text"
+          name="alimento"
+          value={novoPrograma.alimento}
+          onChange={handleInputChange}
+        />
+
+        <label>Potência:</label>
+        <input
+          type="number"
+          name="potencia"
+          value={novoPrograma.potencia}
+          onChange={handleInputChange}
+        />
+
+        <label>Caractere de Aquecimento:</label>
+        <input
+          type="text"
+          name="caractereAquecimento"
+          value={novoPrograma.caractereAquecimento}
+          onChange={handleInputChange}
+        />
+
+        <label>Tempo:</label>
+        <input
+          type="number"
+          name="tempo"
+          value={novoPrograma.tempo}
+          onChange={handleInputChange}
+        />
+
+        <label>Instruções:</label>
+        <textarea
+          name="instrucoes"
+          value={novoPrograma.instrucoes}
+          onChange={handleInputChange}
+        />
+
+        <button onClick={adicionarProgramaCustomizado}>
+          Adicionar Programa
+        </button>
+      </div>
     </div>
   );
 };
